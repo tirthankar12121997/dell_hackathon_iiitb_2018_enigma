@@ -21,7 +21,7 @@
 </style>
 <body>
 	<center id="ebom" class="container-fluid">
-		<input id="ebomname" type="text" class="form-control" placeholder="enter EBOM name" />
+		<select id="ebomname" class="form-control"><option value="" selected disabled>EBOM names</option></select>
 		<button id="ebombtn" class="btn btn-success">Generate MBOM</button>
 	</center>
 	<div id="mbom" class="container-fluid">
@@ -30,7 +30,7 @@
 			<br/>
 			<div class="row">
 				<div class="col-sm-8">
-					<input type="text" id="ebomname" class="form-control" placeholder="Enter MBOM name">
+					<input type="text" id="mbomname" class="form-control" placeholder="Enter MBOM name">
 				</div>
 				<div class="col-sm-4">
 					<button id="commitbtn" class="btn btn-primary">Commit</button>
@@ -125,7 +125,23 @@
 		ebom.style.display = "block";
 		mbom.style.display = "none";//
 		list = [];//for storing item objects
-		
+		ebomnames();
+		function ebomnames () {
+			var hr = new XMLHttpRequest ();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						var ebomlist = JSON.parse(this.responseText);
+						//alert(ebomlist[0].ebom_name)
+						for (i = 0; i < ebomlist.length; i++){
+							ebomname.innerHTML += '<option>'+ebomlist[i].ebom_name+'</option>'
+						}
+					}
+				}
+			}
+			hr.open('GET', '/ebomnames', true);
+			hr.send(null);
+		}
 
 		ebombtn.onclick = function () {
 			var hr = new XMLHttpRequest();
@@ -269,39 +285,71 @@
 		}
 		var globe = 0;
 		function editattr (rid) {
+			if (list[rid].req)
+			{
+				alert("Item is Forced by Engineer !");
+			}
+			else
+			{
 			add.style.display = "none";
-			edit.style.display = "block";
 			var temp = list[rid];
 			//alert(list.length);
 			var check = "";
 			if (temp.req) 
 				check = "checked";
 			properties.innerHTML = `
-				<span><h3>Item description : </h3>${temp.partdesc}</span>
+				<h3 class="display-3">Item description : </h3>
+				<select id="descproperties" class="form-control">
+					<option value="" selected disabled>Description</option>
+				</select>
 				<h3>Quantity : </h3>
 				<input id="qtyedit" class="form-control" type="text" value="${temp.qty}" /><br/>
-				<h3>Comments : </h3>
+				<h3 class="display-3">Comments : </h3>
 				<textarea id = "cmedit" class="form-control" rows="5">${temp.comments}</textarea><br>
 				<div id="extra" class="row container-fluid">
-
+					<h3 class="display-3"></h3>
 				</div>
 				<center><button id="addattr" class="btn"><i class="glyphicon glyphicon-plus"></i> Add attribute</button> <button class="btn btn-success" id="saveedit" onclick="savechanges(${rid})">Save and Close</button></center>
 			`;
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						var desclist = JSON.parse(this.responseText);
+						for (i = 0; i < desclist.length; i++) {
+							document.getElementById("descproperties").innerHTML += '<option>'+desclist[i].desc+'</option>'
+						}
+					}
+				}
+			}
+			hr.open('POST', '/getdesc', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({partno:list[rid].partno}));
+  			edit.style.display = "block";
 			cbedit = document.getElementById("cbedit");//checkbox for forced in properties panel
 			cmedit = document.getElementById("cmedit");//comments text area in properties panel
 			saveedit = document.getElementById("saveedit");// Save button for changing properties in propeties panel
 			qtyedit = document.getElementById("qtyedit");//qty edit properties panel
 			addattr = document.getElementById("addattr");
 			extra = document.getElementById("extra");
+			globe = 0;
 			for (i in list[rid]) {
 				if (i == "comments" || i == "ebom_id" || i == "partdesc" || i == "partno" || i == "price" || i == "req" || i == "_id" || i == "qty")
 					continue;
+				var atid = "attr"+globe.toString();
+				var vid = "val"+globe.toString();
 				var x = list[rid][i];
 				extra.innerHTML += `
-					<h4>${i} : ${x}</h4>
+					<div class="col-sm-6">
+					<input id="${atid}" value="${i}" class="form-control" type="text" placeholder="Attribute" />
+					</div>
+					<div class="col-sm-6"> 
+					<input id="${vid}" value="${x}" class="form-control" type="text" placeholder="Value" />
+					</div>
+					<br/><br/>
 				`;
+				globe++;
 			}
-			globe = 0;
 			addattr.onclick = function () {
 				var atid = "attr"+globe.toString();
 				var vid = "val"+globe.toString();
@@ -316,6 +364,7 @@
 				`;
 				extra.innerHTML += content;
 				globe++;
+			}
 			}
 		}
 		
@@ -342,12 +391,22 @@
 							else
 							{
 								var re=JSON.parse(this.responseText);
+								var c = 0;
+								for (i = 0; i < list.length; i++) {
+									if (list[i].partno == re.part_id)
+									{
+										c++;
+										break;
+									}
+								}
+								if (c == 0)
+								{
 								var myobj = {
 									partno : partno.value,
 									partdesc: re.desc,//get from database
 									qty: quantity.value,
 									req: false,
-									price: 50,//get directly from database
+									price: re.price,//get directly from database
 									comments: comments.value
 								};//an item obj
 								var rid = "r" + (list.length).toString();//id for the new row
@@ -376,6 +435,11 @@
 								quantity.value = "";
 								comments.value = "";
 								forced.checked = false;
+								}
+								else
+								{
+									alert("Item already added !")
+								}	
 							}
 						}
 						else
@@ -470,11 +534,16 @@
 			{
 				alert ("Enter some validated quantity !");
 			}
+			else if (document.getElementById("descproperties").value == "")
+			{
+				alert("Select an Item");
+			}
 			else
 			{
 				list[rid].qty = qtyedit.value;
 				list[rid].req = false;
 				list[rid].comments = cmedit.value;
+				list[rid].partdesc = document.getElementById("descproperties").value;
 				var cid = "c" + rid.toString();
 				var modified_partdesc = list[rid].partdesc;
 				var modified_comments = list[rid].comments;
@@ -488,22 +557,36 @@
 					var val = document.getElementById("val"+i).value;
 					list[rid][attribute] = val;
 				}
-				alert(list[rid]);
-				var tr = `
-						<td><input id="${cid}" type="checkbox" /></td>
-						<td>${rid+1}</td>
-						<td>${list[rid].partno}</td>
-						<td>${modified_partdesc}</td>
-						<td>${list[rid].qty}</td>
-						<td>${list[rid].req}</td>
-						<td>${list[rid].price}</td>
-						<td>${modified_comments}</td>
-					`;
+				var hr = new XMLHttpRequest();
+				hr.onreadystatechange = function () {
+					if (this.readyState == XMLHttpRequest.DONE) {
+						if (this.status == 200) {
+							var myobj = JSON.parse(this.responseText);
+							//alert(myobj.part_id)
+							list[rid].partno = myobj.part_id;
+							list[rid].price = myobj.price;
+							var tr = `
+								<td><input id="${cid}" type="checkbox" /></td>
+								<td>${rid+1}</td>
+								<td>${list[rid].partno}</td>
+								<td>${modified_partdesc}</td>
+								<td>${list[rid].qty}</td>
+								<td>${list[rid].req}</td>
+								<td>${list[rid].price}</td>
+								<td>${modified_comments}</td>
+							`;
 
-				document.getElementById("r"+rid.toString()).innerHTML = tr;
+							document.getElementById("r"+rid.toString()).innerHTML = tr;
 
-				edit.style.display = "none";
-				add.style.display = "block";
+							edit.style.display = "none";
+							add.style.display = "block";
+						}
+					}
+				}
+				hr.open('POST', '/getpartidmbom', true);
+				hr.setRequestHeader('Content-Type','application/json');
+  				hr.send(JSON.stringify({catid: list[rid].partno.split("x")[0], desc : list[rid].partdesc}));
+				
 			}
 
 		};
@@ -517,9 +600,9 @@
 					}
 				}
 			}
-			hr.open('POST', '/commitebomtodb',true);
+			hr.open('POST', '/commitmbomtodb',true);
 			hr.setRequestHeader('Content-Type','application/json');
-  			hr.send(JSON.stringify({list: list,ebomname:ebomname.value}));
+  			hr.send(JSON.stringify({list: list,mbomname:mbomname.value}));
 		}		
 	</script>
 </body>

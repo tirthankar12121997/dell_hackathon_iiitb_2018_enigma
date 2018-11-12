@@ -26,6 +26,47 @@ app.get('/category', function (req, res) {
 	})
 });
 
+app.get('/ebomnames', function (req, res){
+	var dbo = pool.db('BOM')
+	dbo.collection("ebominfo").find({}).toArray(function (err, result) {
+		if (err)
+			throw err;
+		res.send(result);
+	})
+});
+
+app.post('/getdesc', function (req, res) {
+	var partno = req.body.partno;
+	partno = partno.split("x")[0];
+	var dbo = pool.db('BOM')
+	dbo.collection("category").findOne({"cat_id" : partno}, function (err, result) {
+		if (err)
+			throw err;
+		var catname = result.cat_name;
+		dbo.collection(catname).find({}).toArray(function (err, r) {
+			if (err)
+				throw err;
+			res.send(r);
+		})	
+	})
+});
+
+app.post('/getpartidmbom', function (req, res) {
+	var catid = req.body.catid;
+	var desc = req.body.desc;
+	var dbo = pool.db('BOM')
+	dbo.collection("category").findOne({"cat_id" : catid}, function (err, result) {
+		if (err)
+			throw err;
+		var catname = result.cat_name;
+		dbo.collection(catname).findOne({desc: desc}, function (err, r) {
+			if (err)
+				throw err;
+			res.send(r);
+		})	
+	})
+});
+
 app.post('/getcategory', function (req, res) {
 	var cat = req.body.cat;
 	var dbo = pool.db('BOM')
@@ -115,6 +156,45 @@ app.post('/commitebomtodb', function (req, res) {
 			else
 			{
 				res.send("EBOM name already exists");
+			}
+		})
+	})
+
+});
+
+app.post('/commitmbomtodb', function (req, res) {
+	list = req.body.list;
+	mbomname = req.body.mbomname;
+	var dbo = pool.db('BOM')
+	dbo.createCollection("mbominfo", function (err, r) {
+		if (err)
+			throw err
+		dbo.collection("mbominfo").findOne({"mbom_name":mbomname}, function (err, result) {
+			if (err)
+				throw err;
+			if (result == null)
+			{
+				var myobj = {"mbom_name":mbomname, "man_id": 1, "ebom_id":list[0].ebom_id,"commit":  "1"};
+				dbo.collection("mbominfo").insertOne(myobj, function (err, r1) {
+					if (err)
+						throw err;
+					for (var i = 0; i < list.length; i++) {
+						list[i].mbom_id = myobj._id;
+					}	
+					dbo.createCollection("mbom", function (err, r3) {
+						if (err)
+							throw err;
+						dbo.collection("mbom").insertMany(list, function(err, r4) {
+							if (err)
+								throw err;
+							res.send("Inserted MBOM into DB");
+						})
+					})
+				})
+			}	
+			else
+			{
+				res.send("MBOM name already exists");
 			}
 		})
 	})

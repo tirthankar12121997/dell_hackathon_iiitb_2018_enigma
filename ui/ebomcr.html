@@ -251,12 +251,22 @@
 							else
 							{
 								var re=JSON.parse(this.responseText);
+								var c = 0;
+								for (i = 0; i < list.length; i++) {
+									if (list[i].partno == re.part_id)
+									{
+										c++;
+										break;
+									}
+								}
+								if (c == 0)
+								{
 								var myobj = {
 									partno : partno.value,
 									partdesc: re.desc,//get from database
 									qty: quantity.value,
 									req: forced.checked,
-									price: 50,//get directly from database
+									price: re.price,//get directly from database
 									comments: comments.value
 								};//an item obj
 								var rid = "r" + (list.length).toString();//id for the new row
@@ -285,6 +295,11 @@
 								quantity.value = "";
 								comments.value = "";
 								forced.checked = false;
+								}
+								else
+								{
+									alert("Part already present");
+								}
 							}
 						}
 						else
