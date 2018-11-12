@@ -108,11 +108,14 @@
 			if (this.readyState == XMLHttpRequest.DONE) {
 				if (this.status == 200) {
 					list = JSON.parse(hr.responseText);
-					alert(list)
+					
 					for (i = 0; i < list.length; i++) {
-						for (j in list[i]) {
-							alert(j + "=" + list[i].j);
-						}
+						tbody1.innerHTML += `
+							<tr>
+								<td>${list[i].partno}</td>
+								<td>${list[i].quantity}</td>
+							</tr>
+						`;
 					}
 				}
 				else
@@ -121,7 +124,7 @@
 		}
 		hr.open('POST', '/checkstock', true);
 		hr.setRequestHeader('Content-Type','application/json');
-		hr.send(JSON.stringify({x: "hello"}));
+		hr.send(JSON.stringify({}));
 	}
 
 

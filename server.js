@@ -202,7 +202,6 @@ app.post('/commitmbomtodb', function (req, res) {
 });
 
 app.post('/checkstock', function (req, res) {
-	var x = req.body.x;
 	var dbo = pool.db('BOM')
 	dbo.collection("stock").find({}).toArray(function (err, result) {
 		if (err)
