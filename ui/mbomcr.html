@@ -1,0 +1,527 @@
+<html>
+<head><title>BOM Management</title></head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style type="text/css">
+	thead {
+		background-color: grey;
+	}
+	tbody tr:hover {
+		background-color: lightgrey;
+		cursor: pointer;
+	}
+</style>
+<body>
+	<center id="ebom" class="container-fluid">
+		<input id="ebomname" type="text" class="form-control" placeholder="enter EBOM name" />
+		<button id="ebombtn" class="btn btn-success">Generate MBOM</button>
+	</center>
+	<div id="mbom" class="container-fluid">
+		<div class="row">
+			<div class="col-sm-8">
+			<br/>
+			<div class="row">
+				<div class="col-sm-8">
+					<input type="text" id="ebomname" class="form-control" placeholder="Enter MBOM name">
+				</div>
+				<div class="col-sm-4">
+					<button id="commitbtn" class="btn btn-primary">Commit</button>
+					<button id="vebom" class="btn btn-success">View EBOM</button>
+				</div>
+			</div>
+			<br>
+				<table class="table table-bordered">
+					<thead>
+						<tr>
+							<th>Delete</th>
+							<th>Sl no.</th>
+							<th>Part No.</th>
+							<th>Part Description</th>
+							<th>Qty</th>
+							<th>Req</th>
+							<th>Price (Rs.)</th>
+							<th>Comments</th>
+						</tr>
+					</thead>
+					<tbody id="tbody1">
+						
+					</tbody>
+				</table>
+				<center><button id="deleteitem" class="btn btn-Danger">Delete Item(s)</button></center>
+			</div>
+			<div class="col-sm-4">
+				<br/>
+				<div id="add">
+				<div class="panel panel-primary">
+					<div class="panel-heading"><h3 class="display-3">Select Item</h3></div>
+					<div class="panel-body">
+					<div id="selectcat"> 
+						
+					</div>	
+					<br/>
+					<div id="selectitem">
+						
+					</div>
+					<br/>
+					<center><button id="generate" class="btn btn-success">Generate part no</button><center>
+						<center><h4 class="display-4">OR</h4></center>
+						<input id="partno" type="text" class="form-control" placeholder="Enter part No." />
+						<br/>
+						<input id="quantity" type="text" class="form-control" placeholder="Quantity"/><br/>
+						<textarea id="comments" class="form-control" rows="4" placeholder="Comments"></textarea>
+						<br/>
+						<center>
+						<button id="additem" class="btn btn-primary">Add item</button>
+						</center>
+						<br/>
+						<center id="item_image">
+							<!-- get image from inputs -->
+						</center>
+					</div>
+				</div>
+				</div>
+				<div id="edit"><!-- properties panel -->
+					<div class="panel panel-primary">
+					<div class="panel-heading"><h3 class="display-3">Properties<button id="close" style="float: right" class="btn btn-danger"><i class="glyphicon glyphicon-remove"></i></button></h3></div>
+					<div id="properties" class="panel-body">
+					</div>
+				</div>
+				</div>
+			</div>
+		
+		</div>
+	</div>
+	<script type="text/javascript">
+		tbody1 = document.getElementById("tbody1");//table body
+		deleteitem = document.getElementById("deleteitem");//delete item button
+		partno = document.getElementById("partno");//part no from panel
+		quantity = document.getElementById("quantity");//quantity from panel
+		forced = document.getElementById("forced");//checkbox for forced
+		comments = document.getElementById("comments");//comments from panel
+		additem = document.getElementById("additem");//Add item button
+		add = document.getElementById("add");//panel for adding item
+		edit = document.getElementById("edit");//panel for editing properties
+		close = document.getElementById("close");//close button for properties panel
+		properties = document.getElementById("properties");//properties tab
+		selectcat = document.getElementById("selectcat");//dropdon division
+		selectitem = document.getElementById("selectitem");
+		generate = document.getElementById("generate");
+		partno = document.getElementById("partno");
+		commitbtn = document.getElementById("commitbtn");
+		ebomname = document.getElementById("ebomname");//
+		ebom = document.getElementById("ebom");
+		mbom = document.getElementById("mbom");
+		ebombtn = document.getElementById("ebombtn");
+		ebomname = document.getElementById("ebomname");
+		vebom = document.getElementById("vebom");
+		ebom.style.display = "block";
+		mbom.style.display = "none";//
+		list = [];//for storing item objects
+		
+
+		ebombtn.onclick = function () {
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						if (this.responseText == "0") {
+							alert ("Invalid EBOM");
+						}
+						else
+						{
+							alert("Generating MBOM");
+							ebom.style.display = "none";
+
+							var templist = JSON.parse(this.responseText);
+							for (i = 0; i < templist.length; i++)
+							{
+								list.push(templist[i]);
+							}
+							var content = "";
+							for (i = 0; i < list.length; i++) {
+								rid = "r" + i.toString();
+								cid = "c" + i.toString();
+								var modified_partdesc = list[i].partdesc;
+								var modified_comments = list[i].comments;
+								if (list[i].partdesc.length > 15)
+									modified_partdesc = list[i].partdesc.substring(0 , 15) + "...";
+								if (list[i].comments.length > 15)
+									modified_comments = list[i].comments.substring(0 , 15) + "..."
+								content += `
+										<tr ondblclick="editattr(${i})" id="${rid}">
+											<td><input id="${cid}" type="checkbox" /></td>
+											<td>${i+1}</td>
+											<td>${list[i].partno}</td>
+											<td>${modified_partdesc}</td>
+											<td>${list[i].qty}</td>
+											<td>${list[i].req}</td>
+											<td>${list[i].price}</td>
+											<td>${modified_comments}</td>
+										</tr>`;
+							}
+							mbom.style.display = "block";
+							tbody1.innerHTML = content;
+						}
+					}
+				}
+			}
+			hr.open('POST', '/validate', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({ebomname: ebomname.value}));
+		}
+		vebom.onclick = function () {
+			window.open("http://localhost:8080/vebom/"+ebomname.value)
+		}
+		getCategory();
+		edit.style.display = "none";//initially properties panel hidden
+		function getCategory () {
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (hr.readyState == XMLHttpRequest.DONE)
+				{
+					if (hr.status == 200)
+					{
+						var categorylist = JSON.parse(hr.responseText)
+						//console.log(categorylist);
+						selectcat.innerHTML = `
+							<select class="form-control" onchange="populate()" id="cat">
+							</select>
+						`;
+						var temp = '<option value="" selected disabled>Category</option>'
+						
+						for (i = 0; i < categorylist.length; i++)
+						{
+							temp += '<option>'+ categorylist[i] + '</option>'
+						}
+						document.getElementById("cat").innerHTML = temp;
+					}
+					else
+						alert("couldnt connect to server !");
+				}
+			}
+			hr.open('GET', '/category', true);
+			hr.send(null)
+		}
+		function populate() {
+			selectitem.innerHTML = "";
+			var cat = document.getElementById("cat");
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE){
+					if (this.status == 200) {
+						var result = JSON.parse(this.responseText);
+						var x = "desc";
+						var content = '<select id='+x +' class="form-control"><option value="" selected disabled>'+x+'</option></select>';
+						selectitem.innerHTML += content;
+						var hr2 = new XMLHttpRequest();
+						hr2.onreadystatechange = function () {
+							if (this.readyState == XMLHttpRequest.DONE) {
+								if (this.status == 200) {
+									var attr = JSON.parse(this.responseText);
+									var content = "";
+									for (j = 0; j < attr.length; j++)
+									{
+										content += '<option>'+attr[j]+'</option>';
+									}
+									document.getElementById("desc").innerHTML += content;
+									generate.onclick = function () {
+										var desc = document.getElementById("desc").value;
+										var hr3 = new XMLHttpRequest();
+										hr3.onreadystatechange = function () {
+											if (this.readyState == XMLHttpRequest.DONE) {
+												if (this.status == 200) {
+													var dlist = JSON.parse(this.responseText);
+													partno.value=dlist.part_id;
+												}
+											}
+										}
+										hr3.open('POST', '/getpartid', true);
+										hr3.setRequestHeader('Content-Type','application/json');
+  										hr3.send(JSON.stringify({cat:cat.value, desc:desc}));
+									}
+								}
+							}
+						}
+						hr2.open('POST', '/specification', true);
+						hr2.setRequestHeader('Content-Type','application/json');
+  						hr2.send(JSON.stringify({cat:cat.value, spec:x}));
+					}
+					else
+						alert("couldnt connect to server!")
+				}
+			}
+			hr.open('POST', '/getcategory', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({cat:cat.value}));
+		}
+
+		close.onclick = function () {// for closing property panel and display additem panel
+			edit.style.display = "none";
+			add.style.display = "block";
+		}
+		var globe = 0;
+		function editattr (rid) {
+			add.style.display = "none";
+			edit.style.display = "block";
+			var temp = list[rid];
+			//alert(list.length);
+			var check = "";
+			if (temp.req) 
+				check = "checked";
+			properties.innerHTML = `
+				<span><h3>Item description : </h3>${temp.partdesc}</span>
+				<h3>Quantity : </h3>
+				<input id="qtyedit" class="form-control" type="text" value="${temp.qty}" /><br/>
+				<h3>Comments : </h3>
+				<textarea id = "cmedit" class="form-control" rows="5">${temp.comments}</textarea><br>
+				<div id="extra" class="row container-fluid">
+
+				</div>
+				<center><button id="addattr" class="btn"><i class="glyphicon glyphicon-plus"></i> Add attribute</button> <button class="btn btn-success" id="saveedit" onclick="savechanges(${rid})">Save and Close</button></center>
+			`;
+			cbedit = document.getElementById("cbedit");//checkbox for forced in properties panel
+			cmedit = document.getElementById("cmedit");//comments text area in properties panel
+			saveedit = document.getElementById("saveedit");// Save button for changing properties in propeties panel
+			qtyedit = document.getElementById("qtyedit");//qty edit properties panel
+			addattr = document.getElementById("addattr");
+			extra = document.getElementById("extra");
+			for (i in list[rid]) {
+				if (i == "comments" || i == "ebom_id" || i == "partdesc" || i == "partno" || i == "price" || i == "req" || i == "_id" || i == "qty")
+					continue;
+				var x = list[rid][i];
+				extra.innerHTML += `
+					<h4>${i} : ${x}</h4>
+				`;
+			}
+			globe = 0;
+			addattr.onclick = function () {
+				var atid = "attr"+globe.toString();
+				var vid = "val"+globe.toString();
+				var content = `
+					<div class="col-sm-6">
+					<input id="${atid}" class="form-control" type="text" placeholder="Attribute" />
+					</div>
+					<div class="col-sm-6"> 
+					<input id="${vid}" class="form-control" type="text" placeholder="Value" />
+					</div>
+					<br/><br/>
+				`;
+				extra.innerHTML += content;
+				globe++;
+			}
+		}
+		
+		additem.onclick = function () {
+			//validate
+			if (partno.value == "")
+			{
+				alert("Enter correct partno !");
+			}
+			else if (quantity.value == "" || isNaN(quantity.value) || parseFloat(quantity.value) <= 0)
+			{
+				alert ("Enter some validated quantity !");
+			}
+			else
+			{
+				var hr = new XMLHttpRequest();
+				hr.onreadystatechange = function () {
+					if (this.readyState == XMLHttpRequest.DONE)
+					{
+						if (this.status == 200)
+						{
+							if (this.responseText == "0")
+								alert("Please enter a valid part no !");
+							else
+							{
+								var re=JSON.parse(this.responseText);
+								var myobj = {
+									partno : partno.value,
+									partdesc: re.desc,//get from database
+									qty: quantity.value,
+									req: false,
+									price: 50,//get directly from database
+									comments: comments.value
+								};//an item obj
+								var rid = "r" + (list.length).toString();//id for the new row
+								var cid = "c" + (list.length).toString();//id for the new delete checkbox
+								var modified_partdesc = myobj.partdesc;
+								var modified_comments = myobj.comments;
+								if (myobj.partdesc.length > 15)
+									modified_partdesc = myobj.partdesc.substring(0 , 15) + "...";
+								if (myobj.comments.length > 15)
+									modified_comments = myobj.comments.substring(0 , 15) + "...";
+								var tr = `<tr ondblclick="editattr(${list.length})" id="${rid}">
+											<td><input id="${cid}" type="checkbox" /></td>
+											<td>${list.length+1}</td>
+											<td>${myobj.partno}</td>
+											<td>${modified_partdesc}</td>
+											<td>${myobj.qty}</td>
+											<td>${myobj.req}</td>
+											<td>${myobj.price}</td>
+											<td>${modified_comments}</td>
+										</tr>`;// new row entry
+								tbody1.innerHTML += tr;
+								list.push(myobj);// pushed object into the list
+								desc.value = "";
+								cat.value = "";
+								partno.value = "";
+								quantity.value = "";
+								comments.value = "";
+								forced.checked = false;
+							}
+						}
+						else
+							alert("couldnt connect to server !");
+					}
+				}
+				hr.open('POST', '/checkpartid', true);
+				hr.setRequestHeader('Content-Type','application/json');
+  				hr.send(JSON.stringify({partid: partno.value}));
+
+				/*var myobj = {
+					partno : partno.value,
+					partdesc: document.getElementById('desc').value,//get from database
+					qty: quantity.value,
+					req: forced.checked,
+					price: 50,//get directly from database
+					comments: comments.value
+				};//an item obj
+				var rid = "r" + (list.length).toString();//id for the new row
+				var cid = "c" + (list.length).toString();//id for the new delete checkbox
+				var modified_partdesc = myobj.partdesc;
+				var modified_comments = myobj.comments;
+				if (myobj.partdesc.length > 15)
+					modified_partdesc = myobj.partdesc.substring(0 , 15) + "...";
+				if (myobj.comments.length > 15)
+					modified_comments = myobj.comments.substring(0 , 15) + "...";
+				var tr = `<tr ondblclick="editattr(${list.length})" id="${rid}">
+							<td><input id="${cid}" type="checkbox" /></td>
+							<td>${list.length+1}</td>
+							<td>${myobj.partno}</td>
+							<td>${modified_partdesc}</td>
+							<td>${myobj.qty}</td>
+							<td>${myobj.req}</td>
+							<td>${myobj.price}</td>
+							<td>${modified_comments}</td>
+						</tr>`;// new row entry
+				tbody1.innerHTML += tr;
+				list.push(myobj);// pushed object into the list
+				partno.value = "";
+				quantity.value = "";
+				comments.value = "";
+				forced.checked = false;*/
+			}
+		}
+
+		deleteitem.onclick = function () {
+			index = [];//stores index of rows selected for deletion
+			for (i = 0; i < list.length; i++) {
+				if(document.getElementById("c"+i.toString()).checked) {
+					index.push(i);
+				}
+			}
+			var x;
+			if (index.length == 0)
+				x = false;
+			else
+				x = confirm("Are you sure to delete these items?");
+			if (x)
+			{
+				for (i = index.length-1; i >= 0; i--) {//traverse index from end to avoid difficulties of rearranging
+					list.splice(index[i], 1);
+				}
+				tbody1.innerHTML = "";//render the table again
+				for (i = 0; i < list.length; i++) {
+					var rid = "r" + (i).toString();
+					var cid = "c" + (i).toString();
+					var modified_partdesc = list[i].partdesc;
+					var modified_comments = list[i].comments;
+					if (list[i].partdesc.length > 15)
+						modified_partdesc = list[i].partdesc.substring(0 , 15) + "...";
+					if (list[i].comments.length > 15)
+						modified_comments = list[i].comments.substring(0 , 15) + "...";
+					var tr = `<tr ondblclick="editattr(${i})" id="${rid}">
+						<td><input id="${cid}" type="checkbox" /></td>
+						<td>${i+1}</td>
+						<td>${list[i].partno}</td>
+						<td>${modified_partdesc}</td>
+						<td>${list[i].qty}</td>
+						<td>${list[i].req}</td>
+						<td>${list[i].price}</td>
+						<td>${modified_comments}</td>
+					</tr>`;
+				    tbody1.innerHTML += tr;
+				}
+			}
+		}
+		
+		function savechanges(rid){
+			//this is  used to save the changed properties.	
+			//alert(rid);
+			if (qtyedit.value == "" || isNaN(qtyedit.value) || parseFloat(qtyedit.value) <= 0)
+			{
+				alert ("Enter some validated quantity !");
+			}
+			else
+			{
+				list[rid].qty = qtyedit.value;
+				list[rid].req = false;
+				list[rid].comments = cmedit.value;
+				var cid = "c" + rid.toString();
+				var modified_partdesc = list[rid].partdesc;
+				var modified_comments = list[rid].comments;
+				if (list[rid].partdesc.length > 15)
+					modified_partdesc = list[rid].partdesc.substring(0 , 15) + "...";
+				if (list[rid].comments.length > 15)
+					modified_comments = list[rid].comments.substring(0 , 15) + "...";
+				
+				for (i = 0; i < globe; i++) {
+					var attribute = document.getElementById("attr"+i).value;
+					var val = document.getElementById("val"+i).value;
+					list[rid][attribute] = val;
+				}
+				alert(list[rid]);
+				var tr = `
+						<td><input id="${cid}" type="checkbox" /></td>
+						<td>${rid+1}</td>
+						<td>${list[rid].partno}</td>
+						<td>${modified_partdesc}</td>
+						<td>${list[rid].qty}</td>
+						<td>${list[rid].req}</td>
+						<td>${list[rid].price}</td>
+						<td>${modified_comments}</td>
+					`;
+
+				document.getElementById("r"+rid.toString()).innerHTML = tr;
+
+				edit.style.display = "none";
+				add.style.display = "block";
+			}
+
+		};
+		commitbtn.onclick=function(){
+			var hr=new XMLHttpRequest()
+			hr.onreadystatechange=function(){
+				if (hr.readyState == XMLHttpRequest.DONE) {
+					if (hr.status == 200)
+					{
+						alert(hr.responseText);
+					}
+				}
+			}
+			hr.open('POST', '/commitebomtodb',true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({list: list,ebomname:ebomname.value}));
+		}		
+	</script>
+</body>
+
+</html>

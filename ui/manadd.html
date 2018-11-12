@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>BOM Mangement</title><!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style type="text/css">
+		.jm{
+			position: relative;
+			height: 60vh;
+			top: 20vh;
+			border: 1px solid green;
+			box-shadow: 6px 6px 10px grey;
+			-webkit-transition: box-shadow 1s; /*Safari*/
+			transition: box-shadow 1s;
+		}
+		.jm:hover {
+			box-shadow: 6px 6px 100px grey;
+		}
+		.cm{
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+	<div class="container cm">
+  		<center class="jumbotron jm">
+  			<div id="selectcat">
+  				
+  			</div>
+  			<div id="selectitem">
+  				
+  			</div>
+  		</center>
+	</div>
+</body>
+<script type="text/javascript">
+	getCategory();
+	selectcat = document.getElementById("selectcat");
+	selectitem = document.getElementById("selectitem");
+	function getCategory () {
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (hr.readyState == XMLHttpRequest.DONE)
+				{
+					if (hr.status == 200)
+					{
+						var categorylist = JSON.parse(hr.responseText)
+						//console.log(categorylist);
+						selectcat.innerHTML = `
+							<select class="form-control" onchange="populate()" id="cat">
+							</select>
+							<br/>
+						`;
+						var temp = '<option value="" selected disabled>Category</option>'
+						
+						for (i = 0; i < categorylist.length; i++)
+						{
+							temp += '<option>'+ categorylist[i] + '</option>'
+						}
+						document.getElementById("cat").innerHTML = temp;
+					}
+					else
+						alert("couldnt connect to server !");
+				}
+			}
+			hr.open('GET', '/category', true);
+			hr.send(null)
+	}
+	function populate() {
+			selectitem.innerHTML = "";
+			var cat = document.getElementById("cat");
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE){
+					if (this.status == 200) {
+						var result = JSON.parse(this.responseText);
+						for (i in result)
+						{
+							if (i == '_id' || i == 'part_id')
+								continue;
+							var content = '<input type="text" id='+i+' placeholder='+i+' class="form-control"/><br/>';
+							selectitem.innerHTML += content;
+						}
+						selectitem.innerHTML += '<br/><button id="additem" class="btn btn-success">Add Item</button>';
+						document.getElementById("additem").onclick = function () {
+							var myobj = {};
+							for (i in result) {
+								if (i == '_id' || i == 'part_id')
+									continue;
+								myobj.i = document.getElementById(i).value;
+							}
+							var c = 0;
+							for (i in myobj) {
+								if (myobj.i == "")
+									c++;
+							}
+
+							if (c == 0 && !isNaN(myobj.price))
+							{
+								var hr = new XMLHttpRequest();
+								hr.onreadystatechange = function () {
+									if (this.readyState == XMLHttpRequest.DONE){
+										if (this.status == 200) {
+											alert(hr.responseText)
+										}
+									}
+								}	
+								hr.open('POST', '/additem', true);
+								hr.setRequestHeader('Content-Type','application/json');
+  								hr.send(JSON.stringify({cat:cat.value, myobj: myobj}));
+							}
+							else
+								alert("Eneter Correct values !")
+						}
+
+				}
+			}
+			}
+			hr.open('POST', '/getcategory', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({cat:cat.value}));
+  		}
+</script>
+</html>

@@ -1,0 +1,53 @@
+<html>
+<head><title>BOM Management</title></head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style type="text/css">
+	.jm {
+		position: relative;
+		height: 60vh;
+		top: 20vh;
+		border: 1px solid green;
+		box-shadow: 6px 6px 10px grey;
+		-webkit-transition: box-shadow 1s; /* Safari */
+		transition: box-shadow 1s;
+	}
+	.jm:hover {
+		box-shadow: 6px 6px 100px grey;
+	}
+	.cm {
+		height: 100vh;
+	}
+</style>
+
+<body>
+<body>
+	<div class="container cm">
+		<center class="jumbotron jm">
+			<h2 class="display-2">Welcome, <span><!-- add username--></span></h2>
+			<br/>
+			<div class="well">
+				<button id="ebomcr" class="btn btn-success btn-lg">Create new EBOM</button>
+				<br/><br/>
+				<button class="btn btn-success btn-lg">View existing EBOM</button>
+				<br/><br/>
+			</div>
+		</center>
+	</div>
+</body>
+<script>
+	ebomcr = document.getElementById("ebomcr");
+
+	ebomcr.onclick = function () {
+		window.location.href = '/engineer/enghome/ebomcr';
+	}
+</script>
+</html>

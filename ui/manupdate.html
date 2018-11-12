@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>BOM Mangement</title><!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style type="text/css">
+		.jm{
+			position: relative;
+			height: 60vh;
+			top: 20vh;
+			border: 1px solid green;
+			box-shadow: 6px 6px 10px grey;
+			-webkit-transition: box-shadow 1s; /*Safari*/
+			transition: box-shadow 1s;
+		}
+		.lm {
+			float: right;
+			position: relative;
+			height: 80vh;
+			width: 100%;
+			top: 10vh;
+			border: 1px solid grey;
+			border-radius: 5px;
+			box-shadow: 6px 6px 10px grey;
+			-webkit-transition: box-shadow 1s; /*Safari*/
+			transition: box-shadow 1s;
+		}
+		.jm:hover {
+			box-shadow: 6px 6px 100px grey;
+		}
+
+		.cm{
+			height: 100vh;
+		}
+	</style>
+</head>
+<body>
+	<div class="container-fluid cm">
+	<div class="row">
+  		<center class="col-sm-5">
+  		<div class="jumbotron jm">
+  			<input id="partno" type="text" class="form-control" placeholder="Enter Part number of the product" />
+  			<br/>
+  			<input id="quantity" type="text" class="form-control" placeholder="Enter the stock">
+  			<br/>
+  			<button id="check" class="btn btn-primary">Check Stock</button>
+  			<button id="update" class="btn btn-success">Update Stock</button>
+  		</div>
+  		</center>
+  		<center class="col-sm-7">
+  		<div class="jumbotron lm">
+  			<table class="table table-bordered">
+  				<thead>
+  					<tr>
+  						<th>Part No.</th>
+  						<th>Stock</th>
+  					</tr>
+  				</thead>
+  				<tbody id="tbody1">
+  					
+  				</tbody>
+  			</table>
+  		</div>
+  		</center>
+  	</div>
+	</div>
+</body>
+<script type="text/javascript">
+	partno = document.getElementById("partno");
+	quantity = document.getElementById("quantity");
+	update = document.getElementById("update");
+	check = document.getElementById("check");
+	tbody1 = document.getElementById("tbody1");
+	update.onclick = function () {
+		if (partno.value == "")
+		{
+			alert("Enter a valid part number");
+		}
+		else if (quantity.value == "" || isNaN(quantity.value) || parseFloat(quantity.value) < 0)
+		{
+			alert("Enter a valid stock");
+		}
+		else
+		{
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (hr.readyState == XMLHttpRequest.DONE) {
+					if (hr.status == 200) {
+						alert(hr.responseText)
+					}
+				}
+			}
+			hr.open('POST', '/updatestock', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({partno: partno.value, quantity: quantity.value}));
+		}
+	}
+	check.onclick = function () {
+		var hr = new XMLHttpRequest();
+		hr.onreadystatechange = function () {
+			if (this.readyState == XMLHttpRequest.DONE) {
+				if (this.status == 200) {
+					list = JSON.parse(hr.responseText);
+					alert(list)
+					for (i = 0; i < list.length; i++) {
+						for (j in list[i]) {
+							alert(j + "=" + list[i].j);
+						}
+					}
+				}
+				else
+					alert("couldnt connect to server")
+			}
+		}
+		hr.open('POST', '/checkstock', true);
+		hr.setRequestHeader('Content-Type','application/json');
+		hr.send(JSON.stringify({x: "hello"}));
+	}
+
+
+</script>
+</html>
