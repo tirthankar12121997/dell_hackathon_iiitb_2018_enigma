@@ -108,15 +108,16 @@
 			if (this.readyState == XMLHttpRequest.DONE) {
 				if (this.status == 200) {
 					list = JSON.parse(hr.responseText);
-					
+					var tr = "";
 					for (i = 0; i < list.length; i++) {
-						tbody1.innerHTML += `
+						tr += `
 							<tr>
 								<td>${list[i].partno}</td>
 								<td>${list[i].quantity}</td>
 							</tr>
 						`;
 					}
+					tbody1.innerHTML = tr;
 				}
 				else
 					alert("couldnt connect to server")
