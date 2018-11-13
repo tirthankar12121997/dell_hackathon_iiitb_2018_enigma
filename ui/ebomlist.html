@@ -1,0 +1,118 @@
+<html>
+<head><title>BOM Management</title></head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+<!-- jQuery library -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<style type="text/css">
+	thead {
+		background-color: grey;
+	}
+	tbody tr:hover {
+		background-color: lightgrey;
+		cursor: pointer;
+	}
+</style>
+<body>
+	<center id="ebom" class="container-fluid">
+		<select id="ebomname" class="form-control"><option value="" selected disabled>EBOM names</option></select>
+		<button id="ebombtn" class="btn btn-success">Show EBOM</button>
+	</center>
+	<div id="ebomdiv" class="container-fluid">
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>Delete</th>
+					<th>Sl no.</th>
+					<th>Part No.</th>
+					<th>Part Description</th>
+					<th>Qty</th>
+					<th>Req</th>
+					<th>Price (Rs.)</th>
+					<th>Comments</th>
+				</tr>
+			</thead>
+			<tbody id="tbody1">
+						
+			</tbody>
+		</table>
+	</div>
+	<script type="text/javascript">
+		ebom = document.getElementById("ebom");
+		ebombtn = document.getElementById("ebombtn");
+		ebomdiv = document.getElementById("ebomdiv");
+		tbody1 = document.getElementById("tbody1");
+		ebomdiv.style.display = "none";
+		ebomnames();
+		function ebomnames () {
+			var hr = new XMLHttpRequest ();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						var ebomlist = JSON.parse(this.responseText);
+						//alert(ebomlist[0].ebom_name)
+						for (i = 0; i < ebomlist.length; i++){
+							ebomname.innerHTML += '<option>'+ebomlist[i].ebom_name+'</option>'
+						}
+					}
+				}
+			}
+			hr.open('GET', '/ebomnames', true);
+			hr.send(null);
+		}
+		list = [];
+		ebombtn.onclick = function () {
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						if (this.responseText == "0") {
+							alert ("Invalid EBOM");
+						}
+						else
+						{
+							//alert("Generating MBOM");
+							ebom.style.display = "none";
+
+							var templist = JSON.parse(this.responseText);
+							for (i = 0; i < templist.length; i++)
+							{
+								list.push(templist[i]);
+							}
+							var content = "";
+							for (i = 0; i < list.length; i++) {
+								rid = "r" + i.toString();
+								cid = "c" + i.toString();
+								var modified_partdesc = list[i].partdesc;
+								var modified_comments = list[i].comments;
+								content += `
+										<tr ondblclick="editattr(${i})" id="${rid}">
+											<td><input id="${cid}" type="checkbox" /></td>
+											<td>${i+1}</td>
+											<td>${list[i].partno}</td>
+											<td>${modified_partdesc}</td>
+											<td>${list[i].qty}</td>
+											<td>${list[i].req}</td>
+											<td>${list[i].price}</td>
+											<td>${modified_comments}</td>
+										</tr>`;
+							}
+							ebomdiv.style.display = "block";
+							tbody1.innerHTML = content;
+						}
+					}
+				}
+			}
+			hr.open('POST', '/validate', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({ebomname: ebomname.value}));
+		}
+	</script>
+</body>
+</html>

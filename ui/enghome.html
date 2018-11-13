@@ -37,7 +37,7 @@
 			<div class="well">
 				<button id="ebomcr" class="btn btn-success btn-lg">Create new EBOM</button>
 				<br/><br/>
-				<button class="btn btn-success btn-lg">View existing EBOM</button>
+				<button id="ebomlist" class="btn btn-success btn-lg">View existing EBOM</button>
 				<br/><br/>
 			</div>
 		</center>
@@ -45,7 +45,9 @@
 </body>
 <script>
 	ebomcr = document.getElementById("ebomcr");
-
+	ebomlist.onclick = function () {
+		window.location.href = '/engineer/enghome/ebomlist';
+	}
 	ebomcr.onclick = function () {
 		window.location.href = '/engineer/enghome/ebomcr';
 	}

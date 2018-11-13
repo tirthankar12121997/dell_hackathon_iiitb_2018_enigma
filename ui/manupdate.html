@@ -107,6 +107,12 @@
 		hr.onreadystatechange = function () {
 			if (this.readyState == XMLHttpRequest.DONE) {
 				if (this.status == 200) {
+					if (this.responseText == "0")
+					{
+						alert("no stock updated!")
+					}
+					else
+					{
 					list = JSON.parse(hr.responseText);
 					var tr = "";
 					for (i = 0; i < list.length; i++) {
@@ -118,6 +124,7 @@
 						`;
 					}
 					tbody1.innerHTML = tr;
+					}
 				}
 				else
 					alert("couldnt connect to server")

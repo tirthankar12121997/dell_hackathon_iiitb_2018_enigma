@@ -206,7 +206,14 @@ app.post('/checkstock', function (req, res) {
 	dbo.collection("stock").find({}).toArray(function (err, result) {
 		if (err)
 			throw err;
-		res.send(JSON.stringify(result));	
+		if (result.length == 0)
+		{
+			res.send("0");
+		}
+		else
+		{
+			res.send(JSON.stringify(result));
+		}	
 	})
 });
 
@@ -355,6 +362,10 @@ app.get('/manufacturer/manhome/manupdate', function(req,res) {
 app.get('/manufacturer/manhome/mbomcr', function(req,res) {
 	res.sendFile(path.join(__dirname, "ui", "mbomcr.html"));
 })
+
+app.get('/engineer/enghome/ebomlist', function (req, res) {
+	res.sendFile(path.join(__dirname, "ui", "ebomlist.html"))
+});
 
 app.listen(port);
 console.log("Project running on localhost:8080")

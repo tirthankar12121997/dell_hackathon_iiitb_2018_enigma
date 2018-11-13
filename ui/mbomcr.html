@@ -99,6 +99,26 @@
 		
 		</div>
 	</div>
+	<div id="ebomdiv" class="container-fluid">
+		<button id="mebom" class="btn btn-success">View MBOM</button>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>Delete</th>
+					<th>Sl no.</th>
+					<th>Part No.</th>
+					<th>Part Description</th>
+					<th>Qty</th>
+					<th>Req</th>
+					<th>Price (Rs.)</th>
+					<th>Comments</th>
+				</tr>
+			</thead>
+			<tbody id="tbody2">
+						
+			</tbody>
+		</table>
+	</div>
 	<script type="text/javascript">
 		tbody1 = document.getElementById("tbody1");//table body
 		deleteitem = document.getElementById("deleteitem");//delete item button
@@ -119,11 +139,66 @@
 		ebomname = document.getElementById("ebomname");//
 		ebom = document.getElementById("ebom");
 		mbom = document.getElementById("mbom");
+		ebomdiv = document.getElementById("ebomdiv");
+		ebomdiv.style.display = "none";
 		ebombtn = document.getElementById("ebombtn");
 		ebomname = document.getElementById("ebomname");
+		mebom = document.getElementById("mebom");
 		vebom = document.getElementById("vebom");
 		ebom.style.display = "block";
 		mbom.style.display = "none";//
+		//var s = 0;
+		vebom.onclick = function () {
+			mbom.style.display = "none";
+			ebomdiv.style.display = "block";
+			getebomdetails();
+		}
+		mebom.onclick = function () {
+			ebomdiv.style.display = "none";
+			mbom.style.display = "block";
+		}
+		function getebomdetails() {
+			var hr = new XMLHttpRequest();
+			hr.onreadystatechange = function () {
+				if (this.readyState == XMLHttpRequest.DONE) {
+					if (this.status == 200) {
+						if (this.responseText == "0") {
+							alert ("Invalid EBOM");
+						}
+						else
+						{
+							//alert("Generating MBOM");
+							ebom.style.display = "none";
+
+							var templist = JSON.parse(this.responseText);
+							var content = "";
+							for (i = 0; i < templist.length; i++) {
+								rid = "r" + i.toString();
+								cid = "c" + i.toString();
+								var modified_partdesc = templist[i].partdesc;
+								var modified_comments = templist[i].comments;
+								content += `
+										<tr>
+											<td><input type="checkbox" /></td>
+											<td>${i+1}</td>
+											<td>${list[i].partno}</td>
+											<td>${modified_partdesc}</td>
+											<td>${list[i].qty}</td>
+											<td>${list[i].req}</td>
+											<td>${list[i].price}</td>
+											<td>${modified_comments}</td>
+										</tr>`;
+							}
+							document.getElementById("tbody2").innerHTML = content;
+						}
+					}
+				}
+			}
+			hr.open('POST', '/validate', true);
+			hr.setRequestHeader('Content-Type','application/json');
+  			hr.send(JSON.stringify({ebomname: ebomname.value}));
+		}
+		
 		list = [];//for storing item objects
 		ebomnames();
 		function ebomnames () {
@@ -192,9 +267,6 @@
 			hr.open('POST', '/validate', true);
 			hr.setRequestHeader('Content-Type','application/json');
   			hr.send(JSON.stringify({ebomname: ebomname.value}));
-		}
-		vebom.onclick = function () {
-			window.open("http://localhost:8080/vebom/"+ebomname.value)
 		}
 		getCategory();
 		edit.style.display = "none";//initially properties panel hidden
